@@ -1,19 +1,35 @@
-import {
-  isSameDay,
-  isSameYear,
-  isSameMonth,
-  format,
-  startOfDay,
-  startOfMonth,
-  endOfMonth,
-  endOfDay,
-  isSameMinute,
-  startOfYear,
-  getQuarter,
-  startOfQuarter,
-  endOfQuarter,
-  endOfYear,
-} from "date-fns";
+import dayjs from "dayjs";
+import quarterOfYear from "dayjs/plugin/quarterOfYear";
+
+dayjs.extend(quarterOfYear);
+
+/** date-fns function from original repo reimplemented in dayjs for easier future */
+const isSameYear = (from: Date, to: Date) => dayjs(from).isSame(to, "year");
+const isSameMonth = (from: Date, to: Date) => dayjs(from).isSame(to, "month");
+const isSameDay = (from: Date, to: Date) => dayjs(from).isSame(to, "day");
+const isSameMinute = (from: Date, to: Date) => dayjs(from).isSame(to, "minute");
+
+const startOfYear = (from: Date) => dayjs(from).startOf("year").toDate();
+const startOfQuarter = (from: Date) => dayjs(from).startOf("quarter").toDate();
+const startOfMonth = (from: Date) => dayjs(from).startOf("month").toDate();
+const startOfDay = (from: Date) => dayjs(from).startOf("day").toDate();
+
+const endOfYear = (from: Date) => dayjs(from).endOf("year").toDate();
+const endOfQuarter = (from: Date) => dayjs(from).endOf("quarter").toDate();
+const endOfMonth = (from: Date) => dayjs(from).endOf("month").toDate();
+const endOfDay = (from: Date) => dayjs(from).endOf("day").toDate();
+
+const format = (to: Date, format: string) => dayjs(to).format(format);
+const getQuarter = (from: Date) => dayjs(from).quarter();
+
+/** ############################### ORIGINAL CODE ############################### */
+/**
+ * Original code is kept most as it is. Only thing changed is different formatting
+ * strings used between date-fns and dayjs.
+ *
+ * E.g. - date-fns Month format code is "LLL", where as in dayjs it is "MMM";
+ * Year format is "yyyy" in date-fns, "YYYY" for dayjs etc.
+ */
 
 const shortenAmPm = (text: string): string => {
   const shortened = (text || "").replace(/ AM/g, "am").replace(/ PM/g, "pm");
@@ -71,7 +87,7 @@ export const formatDateRange = (
   const thisYear = isSameYear(from, today);
   const thisDay = isSameDay(from, today);
 
-  const yearSuffix = thisYear ? "" : `, ${format(to, "yyyy")}`;
+  const yearSuffix = thisYear ? "" : `, ${format(to, "YYYY")}`;
 
   const formatTime = createFormatTime(locale);
 
@@ -89,7 +105,7 @@ export const formatDateRange = (
     isSameMinute(startOfYear(from), from) &&
     isSameMinute(endOfYear(to), to)
   ) {
-    return `${format(from, "yyyy")}`;
+    return `${format(from, "YYYY")}`;
   }
 
   // Check if the range is an entire quarter
@@ -99,7 +115,7 @@ export const formatDateRange = (
     isSameMinute(endOfQuarter(to), to) &&
     getQuarter(from) === getQuarter(to)
   ) {
-    return `Q${getQuarter(from)} ${format(from, "yyyy")}`;
+    return `Q${getQuarter(from)} ${format(from, "YYYY")}`;
   }
 
   // Check if the range is across entire month
@@ -109,10 +125,10 @@ export const formatDateRange = (
   ) {
     if (sameMonth && sameYear) {
       // Example: January 2023
-      return `${format(from, "LLLL yyyy")}`;
+      return `${format(from, "MMMM YYYY")}`;
     }
     // Example: Jan - Feb 2023
-    return `${format(from, "LLL")} ${separator} ${format(to, "LLL yyyy")}`;
+    return `${format(from, "MMM")} ${separator} ${format(to, "MMM YYYY")}`;
   }
 
   // Range across years
@@ -120,19 +136,19 @@ export const formatDateRange = (
   if (!sameYear) {
     return `${format(
       from,
-      "LLL d ''yy"
+      "MMM D 'YY"
     )}${startTimeSuffix} ${separator} ${format(
       to,
-      "LLL d ''yy"
+      "MMM D 'YY"
     )}${endTimeSuffix}`;
   }
 
   // Range across months
   // Example: Jan 1 - Feb 12[, 2023]
   if (!sameMonth) {
-    return `${format(from, "LLL d")}${startTimeSuffix} ${separator} ${format(
+    return `${format(from, "MMM D")}${startTimeSuffix} ${separator} ${format(
       to,
-      "LLL d"
+      "MMM D"
     )}${endTimeSuffix}${yearSuffix}`;
   }
 
@@ -141,16 +157,16 @@ export const formatDateRange = (
     // Check for a time suffix, if so print the month twice
     // Example: Jan 1, 12:00pm - Jan 2, 1:00pm[, 2023]
     if (startTimeSuffix || endTimeSuffix) {
-      return `${format(from, "LLL d")}${startTimeSuffix} ${separator} ${format(
+      return `${format(from, "MMM D")}${startTimeSuffix} ${separator} ${format(
         to,
-        "LLL d"
+        "MMM D"
       )}${endTimeSuffix}${yearSuffix}`;
     }
 
     // Example: Jan 1 - 12[, 2023]
-    return `${format(from, "LLL d")} ${separator} ${format(
+    return `${format(from, "MMM D")} ${separator} ${format(
       to,
-      "d"
+      "D"
     )}${yearSuffix}`;
   }
 
@@ -166,11 +182,11 @@ export const formatDateRange = (
     // Example: Jan 1, 12pm - 1pm[, 2023]
     return `${format(
       from,
-      "LLL d"
+      "MMM D"
     )}${startTimeSuffix} ${separator} ${formatTime(to)}${yearSuffix}`;
   }
 
   // Full day
   // Example: Fri, Jan 1[, 2023]
-  return `${format(from, "eee, LLL d")}${yearSuffix}`;
+  return `${format(from, "ddd, MMM D")}${yearSuffix}`;
 };
